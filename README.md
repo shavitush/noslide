@@ -18,4 +18,4 @@ Video demonstration: https://www.youtube.com/watch?v=vnxW4QMl0E8
 * `sm_noslide`, `sm_kzmode` or `sm_kz` will toggle noslide. It's disabled by default.
 
 # Optional requirements:
-* [shavit's simple bhop timer](https://github.com/shavitush/bhoptimer) - having `bhoptimer` installed will force this plugin to only work for styles with easybhop disabled, such as easy-scroll or autobhop.
+* [shavit's simple bhop timer](https://github.com/shavitush/bhoptimer) - having `bhoptimer` installed will force this plugin to only work for styles with easybhop enabled, such as easy-scroll or autobhop.
