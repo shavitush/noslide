@@ -1,0 +1,8 @@
+Plugin(source='scripting/noslide.sp')
+
+Package(name='noslide',
+        plugins=['noslide'],
+        filegroups={
+            '.': ['README.md', 'LICENSE'],
+        },
+)
