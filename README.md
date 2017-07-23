@@ -11,7 +11,7 @@ Video demonstration: https://www.youtube.com/watch?v=vnxW4QMl0E8
 
 # Installation
 1. Drag and drop the `noslide.smx` file to your `addons/sourcemod/plugins/` folder.
-2. Load the plugin (`sm plugins load noslider` via the server's console), restart the server or change maps.
+2. Load the plugin (`sm plugins load noslide` via the server's console), restart the server or change maps.
 3. Add `noslide_enabled 1` to map-configs where you want the plugin enabled, such as "bhop_badges2" or similar maps. Alternatively, navigate to `cfg/sourcemod/plugin.noslide.cfg` and switch it to 1 in order to have the plugin running for every map.
 
 # Usage
