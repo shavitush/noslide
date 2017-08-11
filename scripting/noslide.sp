@@ -21,11 +21,12 @@
 #include <sourcemod>
 #include <clientprefs>
 #include <sdktools>
+#include <sdkhooks>
 
 #undef REQUIRE_PLUGIN
 #include <shavit>
 
-#define NOSLIDE_VERSION "1.0"
+#define NOSLIDE_VERSION "1.1"
 
 // Uncommenting will result in an unnecessary message per land.
 // #define DEBUG
@@ -55,6 +56,11 @@ bool gB_Enabled = false;
 #endif
 
 // cache
+ConVar sv_friction = null;
+float gF_DefaultFriction = 4.0;
+char gS_DefaultFriction[16];
+
+EngineVersion gEV_Type;
 bool gB_Shavit = false;
 bool gB_Late = false;
 float gF_Tickrate = 0.01; // 100 tickrate.
@@ -62,6 +68,7 @@ any gA_StyleSettings[STYLE_LIMIT][STYLESETTINGS_SIZE];
 int gBS_Style[MAXPLAYERS+1];
 bool gB_EnabledPlayers[MAXPLAYERS+1];
 int gI_GroundTicks[MAXPLAYERS+1];
+bool gB_StuckFriction[MAXPLAYERS+1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
@@ -77,6 +84,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
+	gEV_Type = GetEngineVersion();
+
 	gH_NoslideCookie = RegClientCookie("noslide_enabled", "Noslide settings", CookieAccess_Protected);
 
 	gCV_Enabled = CreateConVar("noslide_enabled", "0", "Is noslide enabled?\nIt's recommended to set to 0 as default,\nbut use map-configs to enable it for specific maps.\n\n0 - Disabled\n1 - Enabled", 0, true, 0.0, true, 2.0);
@@ -88,7 +97,6 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_kz", Command_Noslide, "Toggles noslide. Alias for sm_noslide.");
 	RegConsoleCmd("sm_kzmode", Command_Noslide, "Toggles noslide. Alias for sm_noslide.");
 
-	gF_Tickrate = GetTickInterval();
 	gB_Shavit = LibraryExists("shavit");
 
 	if(gB_Late)
@@ -106,6 +114,25 @@ public void OnPluginStart()
 		{
 			Shavit_OnStyleConfigLoaded(-1);
 		}
+	}
+
+	sv_friction = FindConVar("sv_friction");
+	sv_friction.Flags &= ~(FCVAR_NOTIFY | FCVAR_REPLICATED);
+	sv_friction.GetString(gS_DefaultFriction, 16);
+	gF_DefaultFriction = sv_friction.FloatValue;
+}
+
+public void OnMapStart()
+{
+	gF_Tickrate = GetTickInterval();
+}
+
+public void OnConfigsExecuted()
+{
+	if(sv_friction != null)
+	{
+		sv_friction.GetString(gS_DefaultFriction, 16);
+		gF_DefaultFriction = sv_friction.FloatValue;
 	}
 }
 
@@ -133,10 +160,24 @@ public void OnLibraryRemoved(const char[] name)
 public void OnClientPutInServer(int client)
 {
 	gI_GroundTicks[client] = 3;
+	gB_StuckFriction[client] = false;
 
 	if(!AreClientCookiesCached(client))
 	{
 		gB_EnabledPlayers[client] = false;
+	}
+
+	if(gEV_Type == Engine_CSGO)
+	{
+		SDKHook(client, SDKHook_PreThinkPost, PreThinkPost);
+	}
+}
+
+public void PreThinkPost(int client)
+{
+	if(IsPlayerAlive(client))
+	{
+		sv_friction.FloatValue = (gB_StuckFriction[client])? 50.0:gF_DefaultFriction;
 	}
 }
 
@@ -214,28 +255,41 @@ public Action OnPlayerRunCmd(int client, int &buttons)
 		return Plugin_Continue;
 	}
 
-	if(!gB_EnabledPlayers[client] || (gB_Shavit && !gA_StyleSettings[gBS_Style[client]][bEasybhop]))
+	if(!gB_EnabledPlayers[client] || (gB_Shavit && !gA_StyleSettings[gBS_Style[client]][bEasybhop]) || (buttons & IN_JUMP) > 0)
 	{
 		return Plugin_Continue;
 	}
 
 	float fStamina = GetEntPropFloat(client, Prop_Send, "m_flStamina");
 
+	#if defined DEBUG
+	// PrintToChat(client, "m_flFriction: %f", GetEntPropFloat(client, Prop_Send, "m_flFriction"));
+	#endif
+
 	// Noslide when a jump is imperfect. Your jump is only perfect when you jump at the same tick you land!
-	if(++gI_GroundTicks[client] == 2 && fStamina <= 350.0) // 350.0 is a sweetspoot for me.
+	if(++gI_GroundTicks[client] == ((gEV_Type == Engine_CSS)? 3:5) && (gEV_Type != Engine_CSS || fStamina <= 350.0)) // 350.0 is a sweetspoot for me.
 	{
-		SetEntPropFloat(client, Prop_Send, "m_flStamina", 1320.0); // 1320.0 is highest stamina in CS:S.
+		if(gEV_Type == Engine_CSS)
+		{
+			SetEntPropFloat(client, Prop_Send, "m_flStamina", 1320.0); // 1320.0 is highest stamina in CS:S.
+		}
+
+		else
+		{
+			gB_StuckFriction[client] = true;
+			sv_friction.ReplicateToClient(client, "50");
+		}
 
 		DataPack pack = new DataPack();
 		pack.WriteCell(GetClientSerial(client));
 		pack.WriteFloat(fStamina);
 
-		CreateTimer((gF_Tickrate * 5), Timer_ApplyNewStamina, pack, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer((gEV_Type == Engine_CSS)? (gF_Tickrate * 5):gF_Tickrate, Timer_ApplyNewStamina, pack, TIMER_FLAG_NO_MAPCHANGE);
 
 		#if defined DEBUG
 		if(gB_Shavit)
 		{
-			Shavit_PrintToChat(client, "Applied new stamina.");
+			Shavit_PrintToChat(client, "Applied new %s.", (gEV_Type == Engine_CSS)? "stamina":"friction");
 		}
 		#endif
 	}
@@ -254,7 +308,16 @@ public Action Timer_ApplyNewStamina(Handle timer, DataPack data)
 
 	if(client != 0)
 	{
-		SetEntPropFloat(client, Prop_Send, "m_flStamina", fStamina);
+		if(gEV_Type == Engine_CSS)
+		{
+			SetEntPropFloat(client, Prop_Send, "m_flStamina", fStamina);
+		}
+
+		else
+		{
+			sv_friction.ReplicateToClient(client, gS_DefaultFriction);
+			gB_StuckFriction[client] = false;
+		}
 	}
 
 	return Plugin_Stop;
