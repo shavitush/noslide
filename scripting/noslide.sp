@@ -64,7 +64,7 @@ EngineVersion gEV_Type;
 bool gB_Shavit = false;
 bool gB_Late = false;
 float gF_Tickrate = 0.01; // 100 tickrate.
-any gA_StyleSettings[STYLE_LIMIT][STYLESETTINGS_SIZE];
+stylesettings_t gA_StyleSettings[STYLE_LIMIT];
 int gBS_Style[MAXPLAYERS+1];
 bool gB_EnabledPlayers[MAXPLAYERS+1];
 int gI_GroundTicks[MAXPLAYERS+1];
@@ -255,7 +255,7 @@ public Action OnPlayerRunCmd(int client, int &buttons)
 		return Plugin_Continue;
 	}
 
-	if(!gB_EnabledPlayers[client] || (gB_Shavit && !gA_StyleSettings[gBS_Style[client]][bEasybhop]) || (buttons & IN_JUMP) > 0)
+	if(!gB_EnabledPlayers[client] || (gB_Shavit && !gA_StyleSettings[gBS_Style[client]].bEasybhop) || (buttons & IN_JUMP) > 0)
 	{
 		return Plugin_Continue;
 	}
