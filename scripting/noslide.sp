@@ -26,7 +26,7 @@
 #undef REQUIRE_PLUGIN
 #include <shavit>
 
-#define NOSLIDE_VERSION "1.1"
+#define NOSLIDE_VERSION "1.2"
 
 // Uncommenting will result in an unnecessary message per land.
 // #define DEBUG
@@ -64,7 +64,6 @@ EngineVersion gEV_Type;
 bool gB_Shavit = false;
 bool gB_Late = false;
 float gF_Tickrate = 0.01; // 100 tickrate.
-stylesettings_t gA_StyleSettings[STYLE_LIMIT];
 int gBS_Style[MAXPLAYERS+1];
 bool gB_EnabledPlayers[MAXPLAYERS+1];
 int gI_GroundTicks[MAXPLAYERS+1];
@@ -209,11 +208,6 @@ public void Shavit_OnStyleConfigLoaded(int styles)
 	{
 		styles = Shavit_GetStyleCount();
 	}
-
-	for(int i = 0; i < styles; i++)
-	{
-		Shavit_GetStyleSettings(i, gA_StyleSettings[i]);
-	}
 }
 
 public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle)
@@ -255,7 +249,7 @@ public Action OnPlayerRunCmd(int client, int &buttons)
 		return Plugin_Continue;
 	}
 
-	if(!gB_EnabledPlayers[client] || (gB_Shavit && !gA_StyleSettings[gBS_Style[client]].bEasybhop) || (buttons & IN_JUMP) > 0)
+	if(!gB_EnabledPlayers[client] || (gB_Shavit && !Shavit_GetStyleSettingBool(gBS_Style[client], "easybhop")) || (buttons & IN_JUMP) > 0)
 	{
 		return Plugin_Continue;
 	}
