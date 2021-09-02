@@ -26,7 +26,7 @@
 #undef REQUIRE_PLUGIN
 #include <shavit>
 
-#define NOSLIDE_VERSION "1.1"
+#define NOSLIDE_VERSION "1.2"
 
 // Uncommenting will result in an unnecessary message per land.
 // #define DEBUG
