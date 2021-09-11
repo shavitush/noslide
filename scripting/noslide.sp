@@ -74,8 +74,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	gB_Late = late;
 
 	MarkNativeAsOptional("Shavit_GetBhopStyle");
-	MarkNativeAsOptional("Shavit_GetStyleCount");
-	MarkNativeAsOptional("Shavit_GetStyleSettings");
+	MarkNativeAsOptional("Shavit_GetStyleSettingBool");
 	MarkNativeAsOptional("Shavit_PrintToChat");
 
 	return APLRes_Success;
@@ -107,11 +106,6 @@ public void OnPluginStart()
 				OnClientPutInServer(i);
 				OnClientCookiesCached(i);
 			}
-		}
-
-		if(gB_Shavit)
-		{
-			Shavit_OnStyleConfigLoaded(-1);
 		}
 	}
 
@@ -199,14 +193,6 @@ public void OnClientCookiesCached(int client)
 	if(gB_Shavit)
 	{
 		gBS_Style[client] = Shavit_GetBhopStyle(client);
-	}
-}
-
-public void Shavit_OnStyleConfigLoaded(int styles)
-{
-	if(styles == -1)
-	{
-		styles = Shavit_GetStyleCount();
 	}
 }
 
