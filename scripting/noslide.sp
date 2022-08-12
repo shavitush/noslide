@@ -24,9 +24,9 @@
 #include <sdkhooks>
 
 #undef REQUIRE_PLUGIN
-#include <shavit>
+#include <shavit/core>
 
-#define NOSLIDE_VERSION "1.2"
+#define NOSLIDE_VERSION "1.21"
 
 // Uncommenting will result in an unnecessary message per land.
 // #define DEBUG
